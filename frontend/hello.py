@@ -1,30 +1,22 @@
 import streamlit as st
+from menu import menu
 
-def upload_pdf():
-    st.title("Upload PDF")
+st.set_option("client.showSidebarNavigation", False)
 
-def trigger_airflow():
-    st.title("Trigger Airflow")
-
-def query_snowflake():
-    st.title("Database Query")
-
-if __name__ == "__main__":
-    st.set_page_config(
-        page_title="Team 2 - PDF Extraction",
+st.set_page_config(
+        page_title="Team 2: PDF Extracton",
         page_icon=":handshake",
         layout="wide"
     )
 
-    st.sidebar.title("Team 2 - PDF Extraction Airflow Pipeline")
-    page = st.sidebar.selectbox(
-        "Select a page",
-        ["Upload PDF","Trigger Airflow","Database Query"]
-    )
+menu()
 
-    if page == "Upload PDF":
-        upload_pdf()
-    elif page == "Trigger Airflow":
-        trigger_airflow()
-    else:
-        query_snowflake()
+st.title("Team 2: PDF Extraction Airflow Pipeline")
+
+st.write("Start by uploading your pdf to AWS S3 bucket")
+if st.button("Upload PDF"):
+    st.switch_page("pages/page_1.py")
+    
+
+
+    
