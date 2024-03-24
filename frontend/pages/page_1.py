@@ -1,5 +1,6 @@
 import streamlit as st
 from menu import menu
+from service import upload_file_api
 
 menu()
 
@@ -10,12 +11,12 @@ def upload_pdf():
 
     if uploaded_file is not None:
         st.write("File uploaded successfully!")
-        st.write("Filename:", uploaded_file.name)
+        # st.write("Filename:", uploaded_file.name)
 
         # Button to trigger API upload
-        if st.button("Upload to API"):
-            # response = upload_file_to_api(uploaded_file)
-            s3_file_path = "s3://bucket_name/path/to/file"
-            st.write("S3 File path:", s3_file_path)
+        if st.button("Upload to S3"):
+            response = upload_file_api(uploaded_file)
+            st.write("Below is the S3 File path to your file:")
+            st.code(response)
 
 upload_pdf()

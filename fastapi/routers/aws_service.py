@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from dotenv import dotenv_values
 from fastapi import FastAPI, File, UploadFile
 import boto3
@@ -18,7 +18,7 @@ s3_client = boto3.client(
     region_name=config["S3_REGION"]
 )
 
-@router.post("/upload/", tags=["aws"])
+@router.post("/upload_s3/")
 async def upload_file(file_obj: UploadFile = File(...)):
     if not is_pdf(file_obj.filename):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
@@ -31,13 +31,17 @@ async def upload_file(file_obj: UploadFile = File(...)):
         success = upload_file_to_bucket(file_obj.file, S3_BUCKET_NAME,folder_name, file_name)
         print("Uploaded ", file_name, " to S3 bucket")
         if success:
-            return {"message": "File uploaded successfully"}
+            print("Uploaded ", file_name, " to S3 bucket")
+            s3_link = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{folder_name}/{file_name}"
+            print("s3_link to access the file", s3_link)
+            return {"status": "Success", "message": "File uploaded successfully", "s3_link": s3_link}
         else:
-            return {"error": "Some error occurred"}
+            return {"status": "Failure", "error": "Some error occurred"}
     except NoCredentialsError:
-        return {"error": "AWS credentials not found or invalid"}
+        return {"status": "Failure", "error": "AWS credentials not found or invalid"}
     except Exception as e:
-        return {"error": str(e)}
+        print(str(e))
+        return {"status": "Failure", "error": "Something went wrong"}
 
 def upload_file_to_bucket( file_obj, bucket, folder, object_name=None):
     """Upload a file to an S3 bucket
@@ -54,7 +58,7 @@ def upload_file_to_bucket( file_obj, bucket, folder, object_name=None):
 
     # Upload the file
     try:
-        response = s3_client.upload_fileobj(file_obj, bucket, f"{folder}/{object_name}")
+        s3_client.upload_fileobj(file_obj, bucket, f"{folder}/{object_name}")
     except ClientError as e:
         logging.error(e)
         return False
