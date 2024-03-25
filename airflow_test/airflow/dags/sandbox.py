@@ -8,7 +8,7 @@ from datetime import timedelta
 ##### TryS
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from grobid_client_python.grobid_client.grobid_client import GrobidClient
+# from grobid_client_python.grobid_client.grobid_client import GrobidClient
 import boto3
 import csv
 import os
@@ -75,7 +75,7 @@ def loadenv():
     wh = os.getenv("SNOWFLAKE_WAREHOUSE")
     return user,password ,db ,account_identifier,wh
 
-def connectionToSnow(path='../config/.env',connection_test=False):
+def connectionToSnow(path='./config/.env',connection_test=False):
     load_dotenv(path,override=True)
     user, password, _, account_identifier,_ = loadenv()
     engine = create_engine(
@@ -256,13 +256,15 @@ class Utility:
         # read env file and set all variables
         # Example: Assuming you have environment variables in a file named '.env'
         # You can use python-dotenv to load them.
-        load_dotenv()
+        path='./config/.env'
+        load_dotenv(path,override=True)
 
         self.snowflake_account = os.getenv('SNOWFLAKE_ACCOUNT')
         self.snowflake_user = os.getenv('SNOWFLAKE_USER')
         self.snowflake_password = os.getenv('SNOWFLAKE_PASSWORD')
         self.snowflake_database = os.getenv('SNOWFLAKE_DATABASE')
         self.snowflake_schema = os.getenv('SNOWFLAKE_SCHEMA')
+        self.snowflake_warehouse = os.getenv('SNOWFLAKE_WAREHOUSE')
     
     def setup_snowflake(self):
         # create snowflake data warehouse
@@ -270,7 +272,8 @@ class Utility:
             user=self.snowflake_user,
             password=self.snowflake_password,
             account=self.snowflake_account,
-            warehouse='YOUR_WAREHOUSE',
+            # warehouse='YOUR_WAREHOUSE',
+            warehouse=self.snowflake_warehouse,
             database=self.snowflake_database,
             schema=self.snowflake_schema
         )
@@ -427,7 +430,7 @@ class Utility:
    
     @staticmethod
     def envForS3():
-        load_dotenv('../config/.env',override=True)
+        load_dotenv('./config/.env',override=True)
         local_path = os.getenv("LOCAL_PATH")
         s3_bucket_name = os.getenv("S3_BUCKET_NAME")
         s3_folder = os.getenv("S3_FOLDER_NAME")
@@ -604,62 +607,62 @@ def parse_all_xml(s3_paths, output_dir):
 ## GROBID
 print("--------------------------- PART 2: GROBID EXTRACTION ---------------------------")
 
-def grobid_extraction():
+# def grobid_extraction():
 
-    load_dotenv('./config/.env',override=True)
-    output_dir = os.getenv("OUTPUT_DIR_PATH") # Store the extracted txt files
-    s3_bucket_name = os.getenv("S3_BUCKET_NAME")
-    access_key = os.getenv("S3_ACCESS_KEY")
-    secret_key = os.getenv("S3_SECRET_KEY")
-    region = os.getenv("S3_REGION")
+#     load_dotenv('./config/.env',override=True)
+#     output_dir = os.getenv("OUTPUT_DIR_PATH") # Store the extracted txt files
+#     s3_bucket_name = os.getenv("S3_BUCKET_NAME")
+#     access_key = os.getenv("S3_ACCESS_KEY")
+#     secret_key = os.getenv("S3_SECRET_KEY")
+#     region = os.getenv("S3_REGION")
 
-    if not os.path.exists("output_data/"):
-        print("Creating directory to store output data")
-        os.makedirs("output_data/")
+#     if not os.path.exists("output_data/"):
+#         print("Creating directory to store output data")
+#         os.makedirs("output_data/")
     
-    if not os.path.exists("data/"):
-        print("Creating directory to store raw pdfs")
-        os.makedirs("data/")
+#     if not os.path.exists("data/"):
+#         print("Creating directory to store raw pdfs")
+#         os.makedirs("data/")
 
-    # download the pdf files from s3
-    s3_paths = download_files_from_s3("data/", "raw_pdfs", access_key, secret_key, region, s3_bucket_name)
+#     # download the pdf files from s3
+#     s3_paths = download_files_from_s3("data/", "raw_pdfs", access_key, secret_key, region, s3_bucket_name)
 
-    print("Changing current working directory to:")
-    os.chdir("grobid_client_python")
-    print(os.getcwd())
-    output_path = f'../{output_dir}/grobid'
-    try:
-        client = GrobidClient(config_path="./config.json")
-        client.process("processFulltextDocument", "../data",
-                    output=output_path, consolidate_citations=True, tei_coordinates=True, force=True)
-        print("Done extracting xml files from GROBID")
+#     print("Changing current working directory to:")
+#     os.chdir("grobid_client_python")
+#     print(os.getcwd())
+#     output_path = f'../{output_dir}/grobid'
+#     try:
+#         client = GrobidClient(config_path="./config.json")
+#         client.process("processFulltextDocument", "../data",
+#                     output=output_path, consolidate_citations=True, tei_coordinates=True, force=True)
+#         print("Done extracting xml files from GROBID")
         
-    except Exception as e:
-        print("Failed to extract pdf using grobid with error:")
-        print(str(e))
-    finally:
-        os.chdir("../")
-        print("Changing current working directory back to:")
-        print(os.getcwd())
+#     except Exception as e:
+#         print("Failed to extract pdf using grobid with error:")
+#         print(str(e))
+#     finally:
+#         os.chdir("../")
+#         print("Changing current working directory back to:")
+#         print(os.getcwd())
 
-    metadata_list,topic_list,content_list = parse_all_xml(s3_paths, output_dir)
+#     metadata_list,topic_list,content_list = parse_all_xml(s3_paths, output_dir)
 
-    # store the objects to csv
-    csv_output_dir = f'{output_dir}cleaned_csv/'
-    Utility.store_to_csv(metadata_list, csv_output_dir, "MetadataPDF.csv")
+#     # store the objects to csv
+#     csv_output_dir = f'{output_dir}cleaned_csv/'
+#     Utility.store_to_csv(metadata_list, csv_output_dir, "MetadataPDF.csv")
 
-    # flatten the lists before storing it to csv
-    topic_flattened = [topic for row in topic_list for topic in row]
-    Utility.store_to_csv(topic_flattened, csv_output_dir, "TopicPDF.csv")
+#     # flatten the lists before storing it to csv
+#     topic_flattened = [topic for row in topic_list for topic in row]
+#     Utility.store_to_csv(topic_flattened, csv_output_dir, "TopicPDF.csv")
 
-    content_flattened = [content for row in content_list for content in row]
-    Utility.store_to_csv(content_flattened, csv_output_dir, "ContentPDF.csv")
+#     content_flattened = [content for row in content_list for content in row]
+#     Utility.store_to_csv(content_flattened, csv_output_dir, "ContentPDF.csv")
 
 
 print("--------------------------- PART 3: PUSHING CLEANED CSV FILES TO S3 ---------------------------")
 def push_extracted_files_to_s3():
-    utility = Utility()
-    utility.setup_snowflake()
+    # utility = Utility()
+    # utility.setup_snowflake()
     local_path, s3_bucket_name, s3_folder, access_key, secret_key, region = Utility.envForS3()
     print(local_path, s3_bucket_name, s3_folder, access_key, secret_key, region)
 
@@ -719,12 +722,12 @@ with dag:
         bash_command='echo "Hello from airflow"'
     )
     
-    grobid_extraction = PythonOperator(
-        task_id='grobid_extraction',
-        python_callable=grobid_extraction,
-        provide_context=True,
-        dag=dag,
-    )
+    # grobid_extraction = PythonOperator(
+    #     task_id='grobid_extraction',
+    #     python_callable=grobid_extraction,
+    #     provide_context=True,
+    #     dag=dag,
+    # )
     
     push_extracted_files_to_s3 = PythonOperator(
         task_id='push_extracted_files_to_s3',
@@ -741,4 +744,5 @@ with dag:
     )
 
 
-hello_world >> grobid_extraction >> push_extracted_files_to_s3 >> create_snowflake_schema
+# hello_world >> grobid_extraction >> push_extracted_files_to_s3 >> create_snowflake_schema
+hello_world >> push_extracted_files_to_s3 >> create_snowflake_schema
