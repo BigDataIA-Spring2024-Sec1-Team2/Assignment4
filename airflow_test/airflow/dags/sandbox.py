@@ -24,6 +24,9 @@ from pydantic.dataclasses import dataclass
 from pydantic import Field, validator, HttpUrl
 import snowflake.connector
 import warnings
+
+import requests
+
 warnings.filterwarnings("ignore")
 from sqlalchemy import create_engine
 current_directory = os.getcwd()
@@ -66,6 +69,67 @@ class TopicPDF:
     level: str = Field(min_length=7)
     topic: str = Field(min_length=1)
 
+
+def process_pdf(input_pdf_path, output_txt_path):
+    # """
+    # Function to process a single PDF by sending it to an API endpoint.
+    # The response is saved to the specified output path.
+    # """
+    print('calling process pdf with', input_pdf_path, output_txt_path)
+    # try:
+    #     url = 'http://localhost:8078/api/processFulltextDocument'  # Example API endpoint
+    #     files = {'input': open(pdf_path, 'rb')}
+    #     response = requests.post(url, files=files)
+
+    #     if response.status_code == 200:
+    #         with open(output_path, 'wb') as f:
+    #             f.write(response.content)
+    #     else:
+    #         print(f"Error processing {pdf_path}: {response.status_code}")
+    # except e as Exception:
+    #     print('error in curl call',e)
+    url = 'http://localhost:8078/api/processFulltextDocument'
+
+    # Ensure that the file exists at the specified path
+    try:
+        print('1')
+        with open(input_pdf_path, 'rb') as file:
+            files = {'input': file}
+            response = requests.post(url, files=files)
+
+        # Check if the request was successful
+        print('2')
+        if response.status_code == 200:
+            with open(output_txt_path, 'w') as output_file:
+                output_file.write(response.text)
+            print(f'Successfully processed and saved output to {output_txt_path}')
+        else:
+            print(f'Error: Received response code {response.status_code}')
+
+    except FileNotFoundError:
+        print(f'Error: The file {input_pdf_path} was not found')
+
+
+def process_all_pdfs(input_dir, output_dir):
+    """
+    Process all PDF files in the given input directory and save the outputs
+    in the output directory, preserving the file names.
+    """
+    # Ensure output directory exists
+    print(output_dir)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    print('pdfs in folders ',os.listdir(input_dir))
+    for filename in os.listdir(input_dir):
+        print(filename)
+        try:
+            if filename.endswith('.pdf'):
+                pdf_path = os.path.join(input_dir, filename)
+                output_path = os.path.join(output_dir, filename.replace('.pdf', '.txt'))  # Change extension to .txt
+                process_pdf(pdf_path, output_path)
+                print(f"Processed {filename} and saved output to {output_path}")
+        except e as Exception:
+            print('failed with error in processing all pdfs ',e)
 
 def loadenv():
     user = os.getenv("SNOWFLAKE_USER")
@@ -566,9 +630,9 @@ def download_files_from_s3(local_folder, s3_folder, access_key, secret_key, regi
     print(file_paths)
     return file_paths
 
-def parse_all_xml(s3_paths, output_dir):
+def parse_all_xml(s3_paths, grobid_output_dir):
     # Iterate through all PDF files in the directory
-    grobid_output_dir = "../"+output_dir+"grobid/"
+    # grobid_output_dir = "../"+output_dir+"/grobid/"
     topic_list,content_list = [], []
     metadata_list = []
     for filename in os.listdir(grobid_output_dir):
@@ -607,56 +671,53 @@ def parse_all_xml(s3_paths, output_dir):
 ## GROBID
 print("--------------------------- PART 2: GROBID EXTRACTION ---------------------------")
 
-# def grobid_extraction():
+def grobid_extraction():
 
-#     load_dotenv('./config/.env',override=True)
-#     output_dir = os.getenv("OUTPUT_DIR_PATH") # Store the extracted txt files
-#     s3_bucket_name = os.getenv("S3_BUCKET_NAME")
-#     access_key = os.getenv("S3_ACCESS_KEY")
-#     secret_key = os.getenv("S3_SECRET_KEY")
-#     region = os.getenv("S3_REGION")
+    load_dotenv('./config/.env',override=True)
+    output_dir = os.getenv("OUTPUT_DIR_PATH") # Store the extracted txt files
+    s3_bucket_name = os.getenv("S3_BUCKET_NAME")
+    access_key = os.getenv("S3_ACCESS_KEY")
+    secret_key = os.getenv("S3_SECRET_KEY")
+    region = os.getenv("S3_REGION")
 
-#     if not os.path.exists("output_data/"):
-#         print("Creating directory to store output data")
-#         os.makedirs("output_data/")
+    if not os.path.exists("output_data/"):
+        print("Creating directory to store output data")
+        os.makedirs("output_data/")
     
-#     if not os.path.exists("data/"):
-#         print("Creating directory to store raw pdfs")
-#         os.makedirs("data/")
+    if not os.path.exists("data/"):
+        print("Creating directory to store raw pdfs")
+        os.makedirs("data/")
 
-#     # download the pdf files from s3
-#     s3_paths = download_files_from_s3("data/", "raw_pdfs", access_key, secret_key, region, s3_bucket_name)
+    # download the pdf files from s3
+    s3_paths = download_files_from_s3("data/", "raw_pdfs", access_key, secret_key, region, s3_bucket_name)
 
-#     print("Changing current working directory to:")
-#     os.chdir("grobid_client_python")
-#     print(os.getcwd())
-#     output_path = f'../{output_dir}/grobid'
-#     try:
-#         client = GrobidClient(config_path="./config.json")
-#         client.process("processFulltextDocument", "../data",
-#                     output=output_path, consolidate_citations=True, tei_coordinates=True, force=True)
-#         print("Done extracting xml files from GROBID")
-        
-#     except Exception as e:
-#         print("Failed to extract pdf using grobid with error:")
-#         print(str(e))
-#     finally:
-#         os.chdir("../")
-#         print("Changing current working directory back to:")
-#         print(os.getcwd())
+    # print("Changing current working directory to:")
+    # os.chdir("grobid_client_python")
+    print(os.getcwd(),os.listdir())
+    output_path = os.getcwd() + f'/output_data/grobid'
+    input_path = os.getcwd() + "/data"
+    try:
+        process_all_pdfs(input_path, output_path)
+    except Exception as e:
+        print("Failed to extract pdf using grobid with error:")
+        print('yolo ---> ' ,e)
+    # finally:
+        # os.chdir("../")
+        # print("Changing current working directory back to:")
+        # print(os.getcwd())
 
-#     metadata_list,topic_list,content_list = parse_all_xml(s3_paths, output_dir)
+    metadata_list,topic_list,content_list = parse_all_xml(s3_paths, output_path)
 
-#     # store the objects to csv
-#     csv_output_dir = f'{output_dir}cleaned_csv/'
-#     Utility.store_to_csv(metadata_list, csv_output_dir, "MetadataPDF.csv")
+    # store the objects to csv
+    csv_output_dir = f'{output_dir}/cleaned_csv/'
+    Utility.store_to_csv(metadata_list, csv_output_dir, "MetadataPDF.csv")
 
-#     # flatten the lists before storing it to csv
-#     topic_flattened = [topic for row in topic_list for topic in row]
-#     Utility.store_to_csv(topic_flattened, csv_output_dir, "TopicPDF.csv")
+    # flatten the lists before storing it to csv
+    topic_flattened = [topic for row in topic_list for topic in row]
+    Utility.store_to_csv(topic_flattened, csv_output_dir, "TopicPDF.csv")
 
-#     content_flattened = [content for row in content_list for content in row]
-#     Utility.store_to_csv(content_flattened, csv_output_dir, "ContentPDF.csv")
+    content_flattened = [content for row in content_list for content in row]
+    Utility.store_to_csv(content_flattened, csv_output_dir, "ContentPDF.csv")
 
 
 print("--------------------------- PART 3: PUSHING CLEANED CSV FILES TO S3 ---------------------------")
@@ -722,12 +783,12 @@ with dag:
         bash_command='echo "Hello from airflow"'
     )
     
-    # grobid_extraction = PythonOperator(
-    #     task_id='grobid_extraction',
-    #     python_callable=grobid_extraction,
-    #     provide_context=True,
-    #     dag=dag,
-    # )
+    grobid_extraction = PythonOperator(
+        task_id='grobid_extraction',
+        python_callable=grobid_extraction,
+        provide_context=True,
+        dag=dag,
+    )
     
     push_extracted_files_to_s3 = PythonOperator(
         task_id='push_extracted_files_to_s3',
@@ -745,4 +806,4 @@ with dag:
 
 
 # hello_world >> grobid_extraction >> push_extracted_files_to_s3 >> create_snowflake_schema
-hello_world >> push_extracted_files_to_s3 >> create_snowflake_schema
+hello_world >> grobid_extraction >> push_extracted_files_to_s3 >> create_snowflake_schema

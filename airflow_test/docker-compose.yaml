@@ -86,14 +86,14 @@ x-airflow-common:
 
 services:
 
-  # grobid:
-  #   image: lfoppiano/grobid:0.8.0
-  #   ports:
-  #     - "8070:8070"
-  #   ulimits:
-  #     core: 0
-  #   # networks:
-  #   #   - my_network
+  grobid:
+    image: lfoppiano/grobid:0.8.0
+    ports:
+      - "8078:8070"
+    ulimits:
+      core: 0
+    # networks:
+    #   - my_network
 
 
   postgres:
