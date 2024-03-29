@@ -16,12 +16,44 @@ AIRFLOW_API_URL = config["AIRFLOW_API_URL"]
 AIRFLOW_USERNAME = config["AIRFLOW_USERNAME"]
 AIRFLOW_PASSWORD = config["AIRFLOW_PASSWORD"]
 
-@router.get("/trigger_airflow_pipeline/")
-async def trigger_airflow_pipeline(s3_file_path):
-    response = trigger_pipeline(s3_file_path)
-    if response:
-        return {"status": "Success", "message": "Airflow pipeline triggered successfully"}
-    return {"status": "Failure", "error": "Something went wrong. Try again."}
+from requests.auth import HTTPBasicAuth
+
+
+@router.post("/trigger_airflow_pipeline/")
+async def trigger_airflow_dag(host, dag_id,username,password):
+    # Construct the URL
+    url = f"http://{host}/api/v1/dags/{dag_id}/dagRuns"
+
+    # Headers for the request
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
+    # Data payload for the request
+    data = {"conf": {}}
+
+    # Basic authentication credentials
+    username = "airflow"
+    password = "airflow"
+
+    # Make the POST request
+    response = requests.post(url, json=data, headers=headers, auth=HTTPBasicAuth(username, password))
+
+    # Check the response status and return the result
+    if response.status_code == 200:
+        return response.json()  # Return the response as JSON if the request was successful
+    else:
+        return {"status": "Failure", "error": response.text}  # Return an error message if the request failed
+
+
+
+
+# async def trigger_airflow_pipeline(s3_file_path):
+#     response = trigger_pipeline(s3_file_path)
+#     if response:
+#         return {"status": "Success", "message": "Airflow pipeline triggered successfully"}
+#     return {"status": "Failure", "error": "Something went wrong. Try again."}
     
 
 def trigger_pipeline(s3_file_path):
@@ -50,7 +82,6 @@ def trigger_pipeline(s3_file_path):
 
 
 
-
 @router.get("/pipeline_status/")
 async def get_pipeline_status():
     status = get_status()
@@ -61,15 +92,25 @@ async def get_pipeline_status():
     
     
 def get_status():
-    return "Running"
-    # try:
-    #     # Fetch the status of the last run of the Airflow DAG
-    #     response = requests.get(AIRFLOW_API_URL)
-    #     last_run_status = response.json()["dag_runs"][0]["state"]
-    #     return last_run_status
-    # except Exception as e:
-    #     logging.error(str(e))
-    #     return None
+    airflow_url = AIRFLOW_API_URL
+    try:
+        response = requests.get(f"{airflow_url}/health")
+        if response.status_code == 200:
+            data = response.json()
+            # Creating a summary of the health status for each component
+            statuses = []
+            for component, details in data.items():
+                status = details['status']
+                if status is None:
+                    status = 'No status'
+                statuses.append(f"{component}: {status}")
+            # Joining all statuses into a single string for display
+            return '\n'.join(statuses)
+        else:
+            return "Airflow server returned an error."
+    except Exception as e:
+        return str(e)
+
 
 
 

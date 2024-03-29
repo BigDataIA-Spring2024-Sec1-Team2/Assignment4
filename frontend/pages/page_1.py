@@ -20,3 +20,9 @@ def upload_pdf():
             st.code(response)
 
 upload_pdf()
+
+st.title("Head to trigger the Airflow pipeline for uploaded pdfs")
+
+st.write("Trigger your airflow pipeline")
+if st.button("to Airflow"):
+    st.switch_page("pages/page_2.py")
