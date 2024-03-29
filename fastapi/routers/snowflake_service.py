@@ -30,6 +30,7 @@ def execute_snowflake_query(query: str) -> List[Any]:
     conn = snowflake.connector.connect(**conn_params)
     cursor = conn.cursor()
     try:
+        cursor.execute('use warehouse soeb0ans015')
         cursor.execute(query)
         # Fetch results
         result = cursor.fetchall()
@@ -43,6 +44,5 @@ def execute_snowflake_query(query: str) -> List[Any]:
 
 @router.post("/execute_query/")
 async def execute_query(request: QueryRequest):
-    execute_snowflake_query('use warehouse soeb0ans015')
     result = execute_snowflake_query(request.query)
     return {"result": result}
