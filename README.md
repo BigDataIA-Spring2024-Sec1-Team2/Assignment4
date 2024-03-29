@@ -58,7 +58,7 @@ The entire system is designed to operate online, with all components containeriz
     * Deploy all services to a cloud platform ensuring they are accessible online.
 
 ## Live application links 
-* [Codelabs](https://docs.getdbt.com/docs/introduction)
+* [Codelabs]([[https://docs.getdbt.com/docs/introduction](https://codelabs-preview.appspot.com/?file_id=13UWgfF_JVTzwE2kEWWyr0eULCBK8SYV_W8wNYLnvs7w#11)](https://codelabs-preview.appspot.com/?file_id=13UWgfF_JVTzwE2kEWWyr0eULCBK8SYV_W8wNYLnvs7w#11))
 * [Streamlit](https://docs.getdbt.com/docs/introduction)
 
 ## Technology Used
