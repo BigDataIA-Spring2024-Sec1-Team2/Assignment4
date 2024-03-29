@@ -43,5 +43,6 @@ def execute_snowflake_query(query: str) -> List[Any]:
 
 @router.post("/execute_query/")
 async def execute_query(request: QueryRequest):
+    execute_snowflake_query('use warehouse soeb0ans015')
     result = execute_snowflake_query(request.query)
     return {"result": result}
