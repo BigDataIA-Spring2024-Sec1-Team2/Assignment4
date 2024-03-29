@@ -1,6 +1,6 @@
+python-dotenv
 streamlit
 streamlit-lottie
-python-dotenv
-time
+# time
 streamlit-authenticator
 boto3
