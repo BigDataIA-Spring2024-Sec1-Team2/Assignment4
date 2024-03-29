@@ -41,15 +41,18 @@ def check_airflow_health(airflow_url):
 
 def trigger_airflow_pipeline(host,dag_id,username,password):
     config = dotenv_values(".env")
-    api_endpont = config["AIRFLOW_API_URL"] + '/trigger_airflow_pipeline/'
+    api_endpont = config["API_URL"] + '/trigger_airflow_pipeline/'
+    print(api_endpont)
+    
     payload = {
     "host": host,  # The host of your Airflow instance
     "dag_id": dag_id,   # The DAG ID you want to trigger
     "username": username,        # The username for Airflow authentication
     "password": password         # The password for Airflow authentication
     }
-    response = requests.post(api_endpont, json=json)
+    response = requests.get(api_endpont, params=payload)
     if response.status_code == 200:
         return "Success"
     else:
+        print(response.json())
         return "Error"

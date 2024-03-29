@@ -83,7 +83,7 @@ password = st.text_input('Password', type='password')  # Masking the password in
 # Button to trigger the pipeline
 if st.button('Trigger Pipeline'):
     result = trigger_airflow_pipeline(host, dag_id, username, password)
-
+    print(result)
     # Check the result and display a message
     if result == "Success":
         st.markdown("<h2 style='color: green;'>Success</h2>", unsafe_allow_html=True)

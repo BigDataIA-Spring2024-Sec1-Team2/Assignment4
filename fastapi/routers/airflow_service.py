@@ -19,7 +19,7 @@ AIRFLOW_PASSWORD = config["AIRFLOW_PASSWORD"]
 from requests.auth import HTTPBasicAuth
 
 
-@router.post("/trigger_airflow_pipeline/")
+@router.get("/trigger_airflow_pipeline/")
 async def trigger_airflow_dag(host, dag_id,username,password):
     # Construct the URL
     url = f"http://{host}/api/v1/dags/{dag_id}/dagRuns"
@@ -42,19 +42,14 @@ async def trigger_airflow_dag(host, dag_id,username,password):
 
     # Check the response status and return the result
     if response.status_code == 200:
+        print("success")
         return response.json()  # Return the response as JSON if the request was successful
     else:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+        print('not success')
         return {"status": "Failure", "error": response.text}  # Return an error message if the request failed
 
 
-
-
-# async def trigger_airflow_pipeline(s3_file_path):
-#     response = trigger_pipeline(s3_file_path)
-#     if response:
-#         return {"status": "Success", "message": "Airflow pipeline triggered successfully"}
-#     return {"status": "Failure", "error": "Something went wrong. Try again."}
-    
 
 def trigger_pipeline(s3_file_path):
     return True
