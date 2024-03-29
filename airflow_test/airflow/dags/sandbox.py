@@ -88,19 +88,25 @@ def process_pdf(input_pdf_path, output_txt_path):
     #         print(f"Error processing {pdf_path}: {response.status_code}")
     # except e as Exception:
     #     print('error in curl call',e)
-    url = 'http://localhost:8078/api/processFulltextDocument'
+    url = 'http://grobid:8070/api/processFulltextDocument'
 
     # Ensure that the file exists at the specified path
     try:
         print('1')
-        with open(input_pdf_path, 'rb') as file:
-            files = {'input': file}
-            response = requests.post(url, files=files)
+        print(input_pdf_path)
+        print(output_txt_path)
+        try:
+            with open(input_pdf_path, 'rb') as file:
+                files = {'input': file}
+                response = requests.post(url, files=files)
+        except Exception as e:
+            print("#### Hey this is the error ####", e)
 
         # Check if the request was successful
         print('2')
         if response.status_code == 200:
-            with open(output_txt_path, 'w') as output_file:
+            print("### Hey man I made it till here")
+            with open(output_txt_path, 'w', encoding="utf-8") as output_file:
                 output_file.write(response.text)
             print(f'Successfully processed and saved output to {output_txt_path}')
         else:
@@ -128,7 +134,7 @@ def process_all_pdfs(input_dir, output_dir):
                 output_path = os.path.join(output_dir, filename.replace('.pdf', '.txt'))  # Change extension to .txt
                 process_pdf(pdf_path, output_path)
                 print(f"Processed {filename} and saved output to {output_path}")
-        except e as Exception:
+        except Exception as e:
             print('failed with error in processing all pdfs ',e)
 
 def loadenv():
@@ -695,7 +701,7 @@ def grobid_extraction():
     # os.chdir("grobid_client_python")
     print(os.getcwd(),os.listdir())
     output_path = os.getcwd() + f'/output_data/grobid'
-    input_path = os.getcwd() + "/data"
+    input_path = os.getcwd() + "/scripts/data/"
     try:
         process_all_pdfs(input_path, output_path)
     except Exception as e:

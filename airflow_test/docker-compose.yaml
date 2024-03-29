@@ -94,6 +94,9 @@ services:
       core: 0
     # networks:
     #   - my_network
+    environment:
+      GROBID_HOST: "host.docker.internal"  # Use host.docker.internal to refer to the host machine
+      GROBID_PORT: 8078
 
 
   postgres:
