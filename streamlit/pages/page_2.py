@@ -75,7 +75,7 @@ if st.button('List PDF Files'):
 st.title('Trigger Airflow DAG')
 
 # Creating text input for each required field
-host = st.text_input('Host', "localhost:8080")
+host = st.text_input('Host', "http://airflow-webserver:8080")
 dag_id = st.text_input('DAG ID', "sandbox")
 username = st.text_input('Username', "airflow")
 password = st.text_input('Password', type='password')  # Masking the password input
