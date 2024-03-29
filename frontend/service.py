@@ -5,15 +5,18 @@ import json
 config = dotenv_values(".env")
 
 def upload_file_api(file):
+    config = dotenv_values(".env")
     api_endpont = config["API_URL"] + config["S3_UPLOAD_ENDPOINT"]
-
+    print(api_endpont)
     files = {'file_obj': file}
     response = requests.post(api_endpont, files=files)
+    print()
     print(response.json())
+    print()
     res = response.json()
     if res['status'] == 'Success':
-        return res['s3_link']
-    return res['error']
+        return res['message']
+    return res['message']
 
 # Function to perform Airflow health check
 def check_airflow_health(airflow_url):
